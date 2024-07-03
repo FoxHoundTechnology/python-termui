@@ -3,13 +3,15 @@ import sys
 import asyncio
 import ipaddress
 from reboot import reboot_device
+from stats import check_stats
 
 class MinerManager:
     def __init__(self):
         self.commands = {
             'reboot': self.reboot_command,
             'sleep': self.sleep_command,
-            'normal': self.normal_command
+            'normal': self.normal_command,
+            'check': self.check_command
         }
 
     def print_header(self):
@@ -26,6 +28,7 @@ class MinerManager:
         print("sleep ip_start-ip_end - Put miners in sleep mode (not implemented)")
         print("normal ip_start-ip_end - Set miners to normal mode (not implemented)")
         print("low ip_start-ip_end - Set miners to low power mode (not implemented)")
+        print("check ip_start-ip_end - Check stats for miners in the specified IP range (not implemented)")
         print("exit - Exit the program")
 
     async def reboot_command(self, start_ip, end_ip):
@@ -38,6 +41,9 @@ class MinerManager:
     async def normal_command(self, start_ip, end_ip):
         print(f"Normal command not implemented. IP range: {start_ip} to {end_ip}")
 
+    async def check_command(self, start_ip, end_ip):
+        await self.process_ip_range(start_ip, end_ip, 'check')
+
     async def process_ip_range(self, start_ip, end_ip, action):
         start = ipaddress.ip_address(start_ip)
         end = ipaddress.ip_address(end_ip)
@@ -47,9 +53,29 @@ class MinerManager:
         while current <= end:
             if action == 'reboot':
                 tasks.append(reboot_device(str(current)))
+            elif action == 'check':            
+
+                print(f"Checking stats for {current}")
+
+                aggregated_stats = {
+                    "total hashrate": 0,
+                }
+
+                tasks.append(check_stats(str(current)))
+
+
             current += 1
 
-        await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks)
+
+        if action == 'check':
+            for stats in results:
+                    hashrate = stats['rate_avg']
+                    aggregated_stats['total hashrate'] += hashrate
+
+            print(f"\nAggregated stats:")
+            print(f"  Total hashrate: {aggregated_stats['total hashrate']} TH/s")
+
 
     async def run(self):
         self.print_header()
