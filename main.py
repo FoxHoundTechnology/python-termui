@@ -75,6 +75,7 @@ class MinerManager:
 
             print(f"\nAggregated stats:")
             print(f"  Total hashrate: {aggregated_stats['total hashrate']} TH/s")
+            print(f"  Total machines: {len(results)}")
 
 
     async def run(self):
