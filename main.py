@@ -14,10 +14,13 @@ class MinerManager:
             'check': self.check_command
         }
 
+        self.hashrate = 0  # Initialize hashrate
+        self.machines = 0  # Initialize machines count
+
     def print_header(self):
         print("\n===== Foxhound Miner Management =====")
-        print(f"\nhashrate: ")
-        print(f"machines: \n")
+        print(f"\nhashrate: {self.hashrate} PH/s")
+        print(f"machines: {self.machines}")
         print("=====================================")
         # print("Command format: cmd ip_start-ip_end")
         print("Type 'help' for available commands or 'exit' to quit")
@@ -57,9 +60,6 @@ class MinerManager:
 
                 print(f"Checking stats for {current}")
 
-                aggregated_stats = {
-                    "total hashrate": 0,
-                }
 
                 tasks.append(check_stats(str(current)))
 
@@ -69,13 +69,21 @@ class MinerManager:
         results = await asyncio.gather(*tasks)
 
         if action == 'check':
+
+            aggregated_stats = {
+                "hashrate": 0,
+                "machines": 0,
+            }
+
             for stats in results:
                     hashrate = stats['rate_avg']
-                    aggregated_stats['total hashrate'] += hashrate
+                    aggregated_stats['hashrate'] += round(hashrate/1000, 2)
+                    aggregated_stats['machines'] += 1
 
-            print(f"\nAggregated stats:")
-            print(f"  Total hashrate: {aggregated_stats['total hashrate']} TH/s")
-            print(f"  Total machines: {len(results)}")
+            self.hashrate = round(aggregated_stats['hashrate'], 2)
+            self.machines = aggregated_stats['machines']
+
+            self.print_header()
 
 
     async def run(self):
